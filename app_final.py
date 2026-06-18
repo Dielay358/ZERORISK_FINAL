@@ -79,31 +79,42 @@ with st.expander("📚 Ver Fundamentos Estadísticos y de Cálculo"):
     *   **Cálculo II:** Volumen del balasto mediante integral de revolución: **{vol_lastre:.2f} m³**.
     """)
 
-# --- IA DIAGNÓSTICO: MOTOR DE ALTA DISPONIBILIDAD (ELIMINA EL ERROR DE ATRIBUTO) ---
+# --- IA DIAGNÓSTICO: VERSIÓN ESTABLE DE PRODUCCIÓN (v11.7) ---
 if st.button("🧠 GENERAR DIAGNÓSTICO INTEGRAL IA"):
-    prompt = f"Ingeniero Senior: Analiza FS {fs:.2f}, Riesgo {p_falla_total*100:.1f}%, Bayes {p_bayes*100:.2f}%. Usa términos de Walpole e Hibbeler."
+    # Definimos el prompt con el rigor técnico solicitado
+    prompt = f"""
+    Actúa como Ingeniero Senior. Analiza los resultados técnicos de la Grúa Torre:
+    - Factor de Seguridad (Hibbeler): {fs:.2f}
+    - Riesgo de Falla (Walpole): {p_falla_total*100:.1f}%
+    - Probabilidad Bayesiana: {p_bayes*100:.2f}%
+    - Volumen del Balasto (Cálculo II): {vol_lastre:.2f} m3
     
-    # Probamos con el modelo que Google siempre mantiene activo como prioridad
-    modelo_estándar = 'gemini-1.5-flash-latest'
+    Proporciona un diagnóstico clínico y un plan de acción inmediato.
+    """
     
-    with st.spinner('Estableciendo conexión segura con Google AI...'):
+    with st.spinner('Estableciendo conexión con el motor de IA estable...'):
         try:
-            # Intento directo
-            res = client.models.generate_content(model=modelo_estándar, contents=prompt)
-            st.success(f"Análisis emitido exitosamente")
-            st.markdown(res.text)
-        except Exception as e:
-            # MOSTRAR EL ERROR REAL PARA DIAGNÓSTICO
-            error_real = str(e)
-            st.error(f"❌ Error Técnico Detectado: {error_real}")
+            # Forzamos el uso del modelo gemini-1.5-flash (sin el sufijo -latest)
+            # que es el más estable para cuentas Pay-As-You-Go
+            res = client.models.generate_content(
+                model='gemini-1.5-flash', 
+                contents=prompt
+            )
             
-            if "403" in error_real:
-                st.warning("⚠️ ACCESO DENEGADO (403): Google no permite el uso de IA en tu región actual o tu cuenta tiene una restricción de seguridad.")
-                st.info("SOLUCIÓN: Prueba usando una VPN conectada a USA o verifica que el pago de Google Cloud esté 'Activo'.")
-            elif "401" in error_real:
-                st.warning("⚠️ ERROR DE LLAVE (401): La API Key en los Secrets no es válida.")
-            elif "429" in error_real:
-                st.warning("⚠️ CUOTA EXCEDIDA (429): Estás enviando demasiadas peticiones. Espera 1 minuto.")
+            st.success("✅ Análisis de Ingeniería generado")
+            # Limpiamos el texto para evitar errores de codificación en el navegador
+            st.markdown(res.text.encode('latin-1', 'ignore').decode('latin-1'))
+            
+        except Exception as e:
+            error_msg = str(e)
+            # Si falla el 1.5, intentamos automáticamente con el 2.0 que es el estándar de 2026
+            try:
+                res = client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
+                st.success("✅ Análisis generado con modelo de respaldo (2.0-flash)")
+                st.markdown(res.text.encode('latin-1', 'ignore').decode('latin-1'))
+            except:
+                st.error(f"❌ Error de conexión: {error_msg}")
+                st.info("Sugerencia: Si acabas de activar el pago, espera 5 minutos a que Google actualice tus permisos globales.")
 
 st.sidebar.divider()
 st.sidebar.caption("© 2026 - Universidad UNICA")
