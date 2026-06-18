@@ -81,34 +81,29 @@ with st.expander("📚 Ver Fundamentos Estadísticos y de Cálculo"):
 
 # --- IA DIAGNÓSTICO: MOTOR DE ALTA DISPONIBILIDAD (ELIMINA EL ERROR DE ATRIBUTO) ---
 if st.button("🧠 GENERAR DIAGNÓSTICO INTEGRAL IA"):
-    prompt = f"Ingeniero experto: Analiza FS {fs:.2f}, Riesgo {p_falla_total*100:.1f}%, Bayes {p_bayes*100:.2f}%. Usa términos de Walpole e Hibbeler."
+    prompt = f"Ingeniero Senior: Analiza FS {fs:.2f}, Riesgo {p_falla_total*100:.1f}%, Bayes {p_bayes*100:.2f}%. Usa términos de Walpole e Hibbeler."
     
-    # LISTA DE MODELOS ACTUALIZADA PARA JUNIO 2026
-    # Usamos nombres específicos de versiones que Google mantiene estables
-    modelos_a_probar = [
-        'gemini-1.5-flash', 
-        'gemini-2.0-flash-001', 
-        'gemini-1.5-pro-latest',
-        'gemini-pro'
-    ]
+    # Probamos con el modelo que Google siempre mantiene activo como prioridad
+    modelo_estándar = 'gemini-1.5-flash-latest'
     
-    exito = False
-    with st.spinner('Conectando con el Ingeniero Senior en la nube...'):
-        for mod in modelos_a_probar:
-            if exito: break
-            try:
-                # Intento directo de generación
-                res = client.models.generate_content(model=mod, contents=prompt)
-                st.success(f"✅ Análisis emitido exitosamente")
-                st.markdown(res.text)
-                exito = True
-            except Exception as e:
-                # Si falla, simplemente pasa al siguiente modelo de la lista
-                continue
-        
-        if not exito:
-            st.error("❌ Los modelos de Google en tu región están saturados o requieren una actualización de API Key.")
-            st.info("Sugerencia: Si el pago está activo, asegúrate de haber creado una llave nueva DESPUÉS de activar el pago.")
+    with st.spinner('Estableciendo conexión segura con Google AI...'):
+        try:
+            # Intento directo
+            res = client.models.generate_content(model=modelo_estándar, contents=prompt)
+            st.success(f"Análisis emitido exitosamente")
+            st.markdown(res.text)
+        except Exception as e:
+            # MOSTRAR EL ERROR REAL PARA DIAGNÓSTICO
+            error_real = str(e)
+            st.error(f"❌ Error Técnico Detectado: {error_real}")
+            
+            if "403" in error_real:
+                st.warning("⚠️ ACCESO DENEGADO (403): Google no permite el uso de IA en tu región actual o tu cuenta tiene una restricción de seguridad.")
+                st.info("SOLUCIÓN: Prueba usando una VPN conectada a USA o verifica que el pago de Google Cloud esté 'Activo'.")
+            elif "401" in error_real:
+                st.warning("⚠️ ERROR DE LLAVE (401): La API Key en los Secrets no es válida.")
+            elif "429" in error_real:
+                st.warning("⚠️ CUOTA EXCEDIDA (429): Estás enviando demasiadas peticiones. Espera 1 minuto.")
 
 st.sidebar.divider()
 st.sidebar.caption("© 2026 - Universidad UNICA")
