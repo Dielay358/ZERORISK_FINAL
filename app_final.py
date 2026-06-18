@@ -30,7 +30,7 @@ r_lastre = st.sidebar.slider("Radio Balasto (m)", 0.5, 5.0, 3.77)
 # --- MOTOR TÉCNICO (CÁLCULOS CENTRALIZADOS) ---
 # Cálculo II
 vol_lastre, _ = integrate.quad(lambda y: np.pi * (r_lastre**2), 0, 3)
-masa_contra = vol_lastre * 2400 
+masa_contra = vol_lastre * 2380
 
 # Mecánica
 mv = (carga * radio) + (2500 * 22.5) + (0.005 * viento**2 * 15 * 50)
@@ -120,7 +120,7 @@ def generar_informe_maestro(p_b1, p_b2, p_f1, p_f2, p_tot, pb, vl, mc, rl, mv_va
     st.markdown(fr"""
     **Sólido de Revolución (Método del Disco):**
     $$V = \pi \int_0^3 ({rl:.2f})^2 dy = \pi \cdot {rl**2:.2f} \cdot 3 = {vl:.2f} m^3$$
-    **Masa Final:** $M = {vl:.2f} \cdot 2400 kg/m^3 = {mc:.0f} kg$.
+    **Masa Final:** $M = {vl:.2f} \cdot 2380 kg/m^3 = {mc:.0f} kg$.
     """)
 
     st.header("3. Estática (Hibbeler)")
