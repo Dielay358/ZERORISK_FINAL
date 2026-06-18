@@ -6,10 +6,17 @@ from scipy.stats import poisson
 from google import genai
 import os
 
-# --- CONFIGURACIÓN ---
+# --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="ZERORISK TOWER Pro - UNICA", page_icon="🏗️", layout="wide")
-LLAVE_MAESTRA = "AQ.Ab8RN6Iw_5HmYf8ygdEX_Ve4IHufxzZRZAz6fQjsqGxXt_PwXQ"
-client = genai.Client(api_key=LLAVE_MAESTRA)
+
+# --- CONEXIÓN IA SEGURA (USANDO SECRETS) ---
+try:
+    # Esta línea busca la llave en la configuración de la nube de Streamlit
+    api_key_cloud = st.secrets["GEMINI_API_KEY"]
+    client = genai.Client(api_key=api_key_cloud)
+except Exception:
+    st.error("❌ Configura la 'GEMINI_API_KEY' en el panel de Secrets de Streamlit.")
+    st.stop()
 
 # --- CABECERA ---
 col_logo, col_tit = st.columns([1, 4])
@@ -17,135 +24,107 @@ with col_logo:
     if os.path.exists("logo_unica.png"): 
         st.image("logo_unica.png", width=120)
 with col_tit:
-    st.title("ZERORISK TOWER v9.1")
-    st.write("**Simulación de Ingeniería: Estática, Cálculo II e Inferencia Bayesiana**")
+    st.title("ZERORISK TOWER v9.5")
+    st.write("**Simulación de Ingeniería: Estática (Hibbeler), Cálculo II e Inferencia Bayesiana (Walpole)**")
 
-# --- BARRA LATERAL ---
+st.divider()
+
+# --- BARRA LATERAL: VARIABLES INDEPENDIENTES (CAUSAS) ---
 st.sidebar.header("🕹️ Variables Independientes")
-radio = st.sidebar.slider("Radio de Carga (m)", 2.0, 45.0, 20.0)
+radio = st.sidebar.slider("Radio de Carga (m)", 2.0, 45.0, 20.0, help="Distancia horizontal del carro")
 cap_max = 8000 if radio <= 16.5 else 8000 * (16.5 / radio)
+st.sidebar.info(f"📌 Capacidad Estructural Máxima a {radio:.1f}m: {cap_max:.1f} kg")
+
 carga = st.sidebar.number_input("Peso de la Carga (kg)", 0.0, 10000.0, 2000.0)
 viento = st.sidebar.slider("Velocidad del Viento (km/h)", 0, 100, 20)
-mantenimiento = st.sidebar.slider("Mantenimiento (1-10)", 1, 10, 8)
-r_lastre = st.sidebar.slider("Radio Balasto (m)", 0.5, 5.0, 2.5)
+mantenimiento = st.sidebar.slider("Nivel de Mantenimiento (1-10)", 1, 10, 8)
+r_lastre = st.sidebar.slider("Radio Balasto (m)", 0.5, 5.0, 2.5, help="Cambia visualmente el tamaño del contrapeso")
 
 # --- MOTOR DE CÁLCULO II (INTEGRALES) ---
+# 1. Volumen del Balasto (Sólido de Revolución)
 vol_lastre, _ = integrate.quad(lambda y: np.pi * r_lastre**2, 0, 3)
-masa_contra = vol_lastre * 2400 
-# Integral para longitud de arco del tirante
+masa_contra = vol_lastre * 2400 # Densidad del hormigón kg/m3
+
+# 2. Longitud de Arco (Catenaria del tirante superior)
 long_cable, _ = integrate.quad(lambda x: np.sqrt(1 + (0.01 * x)**2), 0, radio)
 
-# --- MOTOR DE MECÁNICA (HIBBELER) ---
+# --- MOTOR DE MECÁNICA (MOMENTOS DE HIBBELER) ---
 mv = (carga * radio) + (2500 * 22.5) + (0.005 * viento**2 * 15 * 50)
-me = masa_contra * 12 
+me = masa_contra * 12 # Brazo del contrapeso fijo a 12m
 fs = me / mv
 
-# --- MOTOR DE ESTADÍSTICA (WALPOLE) ---
-p_falla_mecanica = (1 - poisson.pmf(0, (12 - mantenimiento) / 12))
-p_viento_alto = 1 if viento > 50 else 0.2
-p_sobrecarga = 1 if carga > cap_max else 0.1
-p_falla_total = (p_viento_alto * 0.6) + (p_sobrecarga * 0.4)
-p_colapso_previo = 0.001 
-p_viento_dado_colapso = 0.90
-p_viento_general = 0.15
-p_bayes = (p_viento_dado_colapso * p_colapso_previo) / p_viento_general
+# --- MOTOR DE ESTADÍSTICA (WALPOLE & BAYES) ---
+p_b1 = 0.85 # Clima Seguro
+p_b2 = 0.15 # Viento Fuerte
+p_f_dado_b1 = (1 - mantenimiento/10) * 0.05
+p_f_dado_b2 = 0.50 if viento > 50 else 0.15
+p_falla_total = (p_f_dado_b1 * p_b1) + (p_f_dado_b2 * p_b2)
+p_bayes = (p_f_dado_b2 * p_b2) / p_falla_total if p_falla_total > 0 else 0
 
-# --- DASHBOARD ---
-st.subheader("📊 Resultados Técnicos")
+# --- DASHBOARD DE VARIABLES DEPENDIENTES (EFECTOS) ---
+st.subheader("📊 Métricas de Respuesta (Resultados)")
 m1, m2, m3, m4 = st.columns(4)
-m1.metric("Factor Seguridad", f"{fs:.2f}")
-m2.metric("Volumen Lastre", f"{vol_lastre:.1f} m³")
-m3.metric("Riesgo Mecánico", f"{p_falla_mecanica*100:.1f}%")
-m4.metric("Prob. Bayesiana", f"{p_bayes*100:.4f}%")
+m1.metric("Factor Seguridad", f"{fs:.2f}", delta="Crítico" if fs < 1.15 else "Estable")
+m2.metric("Volumen Balasto", f"{vol_lastre:.1f} m³")
+m3.metric("Riesgo Estructural", f"{p_falla_total*100:.1f}%")
+m4.metric("Prob. Bayesiana", f"{p_bayes*100:.3f}%")
 
-# --- VISUALIZACIÓN DINÁMICA (CORREGIDA) ---
-st.subheader("🏗️ Ilustración Técnica")
-
+# --- VISUALIZACIÓN DINÁMICA ---
+st.subheader("🏗️ Ilustración Técnica en Tiempo Real")
 fig, ax = plt.subplots(figsize=(10, 5))
 ax.set_facecolor('#0E1117') 
 fig.patch.set_facecolor('#0E1117')
+color_est = '#10B981' if fs > 1.3 else '#F59E0B' if fs > 1.05 else '#E11D48'
 
-color_est = '#10B981' if fs > 1.4 else '#F59E0B' if fs > 1.1 else '#E11D48'
+# Dibujo de estructura
+ax.plot([0, 0], [0, 50], color='white', lw=6) # Mástil
+ax.plot([-30, 60], [0, 0], color='#4B5563', lw=2) # Suelo
+ax.plot([-12, 45], [50, 50], color=color_est, lw=5) # Jib
 
-# 1. Dibujar Mástil y Suelo
-ax.plot([0, 0], [0, 50], color='white', lw=6) 
-ax.plot([-25, 55], [0, 0], color='#334155', lw=2) # Suelo
-
-# 2. Dibujar Pluma (Derecha) y Contrapluma (Izquierda)
-ax.plot([-12, 45], [50, 50], color=color_est, lw=5)
-
-# 3. DIBUJAR BALASTO (CONTRAPESO AZUL) - ¡DINÁMICO!
-# Se ensancha según el radio del balasto
+# Balasto dinámico (Basado en r_lastre)
 balasto_x = [-12 - r_lastre, -12 + r_lastre]
 ax.fill_between(balasto_x, 43, 50, color='#3B82F6', alpha=0.9)
 ax.text(-12, 38, f"BALASTO\n{r_lastre}m", color='#3B82F6', ha='center', fontweight='bold')
 
-# 4. Dibujar Carga y Cable de Izaje
-ax.plot([radio, radio], [50, 35], color='red', lw=2, linestyle='--')
-ax.scatter(radio, 35, color='red', s=200, zorder=5) 
-ax.text(radio, 30, f"CARGA\n{carga}kg", color='red', ha='center', fontweight='bold')
+# Carga dinámica
+ax.plot([radio, radio], [50, 30], color='red', lw=2, linestyle='--')
+ax.scatter(radio, 30, color='red', s=carga/5, alpha=0.8, edgecolors='white', zorder=5)
+ax.text(radio, 23, f"CARGA\n{carga}kg", color='red', ha='center', fontweight='bold')
 
-# 5. Dibujar Tirante de Tensión (Cálculo II)
+# Tirante de Cálculo II
 x_arco = np.linspace(-12, radio, 100)
-y_arco = 50 + 0.005 * (x_arco + 12)**2 # Representación de la curva
-ax.plot(x_arco, y_arco, color='yellow', lw=1, alpha=0.4, label='Tirante')
+y_arco = 50 + 0.006 * (x_arco + 12)**2
+ax.plot(x_arco, y_arco, color='#FDE047', lw=1.5, alpha=0.5)
 
-# Ajustes de cámara fijos
-ax.set_xlim(-25, 55)
-ax.set_ylim(-5, 75)
-ax.axis('off')
+ax.set_xlim(-25, 55); ax.set_ylim(-5, 75); ax.axis('off')
 st.pyplot(fig)
 
-# --- SECCIÓN TEÓRICA ---
-with st.expander("📚 Ver Fundamento Estadístico (Teoría de Walpole)"):
+# --- FUNDAMENTOS TEÓRICOS ---
+with st.expander("📚 Ver Fundamento Estadístico y de Cálculo (Hibbeler/Walpole)"):
     st.markdown(fr"""
-    ### Aplicación de Probabilidad y Estadística I (Walpole)
-    1. **Probabilidad Simple:** Distribución de Poisson para fallas mecánicas.
-    2. **Teorema de la Partición:** El riesgo total (**{p_falla_total*100:.2f}%**) es la suma de particiones climáticas y operativas.
-    3. **Teorema de Bayes:** 
-       $$P(Viento | Falla) = \frac{{P(Falla | Viento) \cdot P(Viento)}}{{P(Falla \ Total)}}$$
-       Probabilidad calculada: **{p_bayes*100:.4f}%**.
-    
-    ### Aplicación de Cálculo II
-    * **Sólido de Revolución:** Volumen de contrapeso: $V = \pi \int_0^3 ({r_lastre})^2 dy = {vol_lastre:.2f} m^3$.
-    * **Longitud de Arco:** Longitud real del tirante: $L = \int \sqrt{{1 + [f'(x)]^2}} dx = {long_cable:.2f} m$.
+    ### Análisis de Ingeniería Aplicado:
+    *   **Teorema de Bayes:** Calculamos la probabilidad revisada de falla crítica dado el viento actual: 
+        $$P(B_2 | F) = \frac{{P(F|B_2) \cdot P(B_2)}}{{P(F)}}$$
+    *   **Cálculo II:** Volumen del balasto mediante integral de revolución: 
+        $V = \pi \int_0^3 ({r_lastre:.2f})^2 dy = {vol_lastre:.2f} m^3$.
+    *   **Mecánica de Cuerpos Rígidos:** Momento de vuelco actual: **{mv:.0f} Nm**.
     """)
 
-# --- IA ---
-if st.button("🧠 GENERAR DIAGNÓSTICO INTEGRAL"):
-    prompt = f"""
-    Actúa como Ingeniero Senior. Analiza los resultados:
-    - FS: {fs:.2f}, Riesgo: {p_falla_total*100:.1f}%, Bayes: {p_bayes*100:.2f}%.
-    - Volumen Balasto (Integral): {vol_lastre:.2f} m3.
-    - Longitud Cable (Arco): {long_cable:.2f} m.
-    
-    Explica el diagnóstico técnico usando términos de Walpole e Hibbeler. 
-    Sé directo y profesional.
-    """
-    
-    # Lista de modelos a los que tienes acceso (según tu lista previa)
-    modelos_respaldo = ['gemini-1.5-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-pro']
-    
+# --- IA DIAGNÓSTICO (ALTA DISPONIBILIDAD) ---
+if st.button("🧠 GENERAR DIAGNÓSTICO INTEGRAL IA"):
+    prompt = f"Como Ingeniero Senior, analiza: FS {fs:.2f}, Riesgo Total {p_falla_total*100:.1f}%, Bayes {p_bayes*100:.2f}%. Usa terminología de Walpole e Hibbeler."
+    modelos = ['gemini-1.5-flash', 'gemini-2.0-flash-lite']
     exito = False
-    with st.spinner('Consultando a la IA (esto puede tardar si hay alta demanda)...'):
-        for nombre_modelo in modelos_respaldo:
+    with st.spinner('Analizando integridad estructural...'):
+        for mod in modelos:
             if exito: break
             try:
-                # Intentamos con el modelo de la lista
-                res = client.models.generate_content(model=nombre_modelo, contents=prompt)
-                st.success(f"Análisis generado exitosamente (Modelo: {nombre_modelo})")
+                res = client.models.generate_content(model=mod, contents=prompt)
+                st.success(f"Diagnóstico emitido por {mod}")
                 st.markdown(res.text)
                 exito = True
-            except Exception as e:
-                if "503" in str(e):
-                    st.warning(f"⚠️ El modelo {nombre_modelo} está saturado. Intentando con otro...")
-                    import time
-                    time.sleep(2) # Espera técnica
-                else:
-                    st.error(f"Error con {nombre_modelo}: {str(e)[:50]}")
-        
-        if not exito:
-            st.error("❌ Todos los servidores de Google están ocupados en este momento. Por favor, espera 30 segundos y presiona el botón nuevamente.")
+            except: continue
+        if not exito: st.error("Servidores ocupados. Intenta en 30 segundos.")
 
 st.sidebar.divider()
 st.sidebar.caption("© 2026 - Universidad UNICA")
