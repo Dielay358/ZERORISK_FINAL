@@ -68,19 +68,36 @@ ax.text(radio, 22, f"CARGA\n{carga}kg", color='red', ha='center', fontweight='bo
 ax.set_xlim(-25, 55); ax.set_ylim(-5, 75); ax.axis('off')
 st.pyplot(fig)
 
-# --- IA DIAGNÓSTICO (ESTABILIZADO) ---
+# --- IA DIAGNÓSTICO: MOTOR DE ALTA ESTABILIDAD 2026 ---
 if st.button("🧠 GENERAR DIAGNÓSTICO INTEGRAL IA"):
-    prompt = f"Como Ingeniero Senior, analiza Grua: FS {fs:.2f}, Riesgo {p_falla_total*100:.1f}%, Bayes {p_bayes*100:.2f}%. Usa términos de Walpole e Hibbeler."
+    prompt = f"""
+    Actúa como Ingeniero Senior. Analiza: 
+    FS: {fs:.2f}, Riesgo Total: {p_falla_total*100:.1f}%, Bayes: {p_bayes*100:.2f}%.
+    Menciona conceptos de Walpole (Estadística) e Hibbeler (Mecánica).
+    """
     
-    with st.spinner('Estableciendo conexión prioritaria con Google AI Studio...'):
-        try:
-            # Forzamos modelos que sabemos que funcionan con API Keys normales
-            res = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
-            st.success("Análisis completado")
-            st.markdown(res.text)
-        except Exception as e:
-            st.error(f"Fallo en la comunicación: {str(e)}")
-            st.info("Sugerencia: Si el error persiste, genera una API Key nueva en AI Studio y actualiza los Secrets.")
-
+    # Lista de modelos por orden de prioridad para el año 2026
+    # Probamos el 2.0 que es el estándar de tu época
+    modelos_a_probar = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash-latest']
+    
+    exito = False
+    with st.spinner('Estableciendo conexión con los servidores de Google...'):
+        for nombre_modelo in modelos_a_probar:
+            if exito: break
+            try:
+                # Intento de conexión
+                res = client.models.generate_content(model=nombre_modelo, contents=prompt)
+                st.success(f"✅ Análisis emitido exitosamente (Servidor: {nombre_modelo})")
+                st.markdown(res.text)
+                exito = True
+            except Exception as e:
+                # Si falla, imprimimos el error en consola de forma silenciosa para el usuario
+                print(f"Fallo con {nombre_modelo}: {e}")
+                continue # Salta al siguiente modelo de la lista
+        
+        if not exito:
+            st.error("❌ No se encontró un modelo compatible activo en Google AI Studio.")
+            st.info("Sugerencia técnica: Entra a Google AI Studio y verifica qué nombres de modelos aparecen en tu lista de 'Playground'.")
+            
 st.sidebar.divider()
 st.sidebar.caption("© 2026 - Universidad UNICA")
