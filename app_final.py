@@ -106,27 +106,38 @@ with st.expander("📚 Ver Fundamento Estadístico y de Cálculo (Hibbeler/Walpo
     *   **Mecánica:** Sumatoria de momentos $\sum M = 0$. Momento volcante actual: **{mv:.0f} Nm**.
     """)
 
-# --- BOTÓN DE IA (MOTOR DE ALTA DISPONIBILIDAD) ---
+# --- BOTÓN DE IA CON DIAGNÓSTICO DE ERRORES REALES (v10.7) ---
 if st.button("🧠 GENERAR DIAGNÓSTICO INTEGRAL IA"):
-    prompt = f"Como Ingeniero Senior, analiza: FS {fs:.2f}, Riesgo Total {p_falla_total*100:.1f}%, Bayes {p_bayes*100:.2f}%. Usa términos de Walpole, Hibbeler e Integrales."
+    prompt = f"""
+    Como Ingeniero Senior, analiza los resultados:
+    - FS: {fs:.2f}, Riesgo Total {p_falla_total*100:.1f}%, Bayes {p_bayes*100:.2f}%.
+    - Volumen Balasto: {vol_lastre:.2f} m3.
+    Menciona a Walpole e Hibbeler.
+    """
     
-    # Probamos con el modelo más inteligente primero
-    modelos = ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash-lite']
-    exito = False
+    # Lista de modelos por orden de estabilidad
+    modelos = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-lite']
     
-    with st.spinner('Analizando integridad estructural...'):
+    with st.spinner('Estableciendo conexión con el motor de IA...'):
+        error_detallado = ""
+        exito = False
+        
         for mod in modelos:
             if exito: break
             try:
                 res = client.models.generate_content(model=mod, contents=prompt)
-                st.success(f"Diagnóstico emitido exitosamente por el modelo {mod}")
+                st.success(f"✅ Análisis emitido por {mod}")
                 st.markdown(res.text)
                 exito = True
-            except:
-                continue # Salto silencioso al siguiente modelo si uno falla
-                
+            except Exception as e:
+                error_detallado += f"\n- {mod}: {str(e)}"
+                continue
+        
         if not exito:
-            st.error("❌ Los servidores de Google no responden. Esto es temporal; por favor intenta en 20 segundos.")
+            st.error("❌ FALLO DE CONEXIÓN TÉCNICA")
+            with st.expander("Ver detalles del error para soporte"):
+                st.code(error_detallado)
+            st.warning("SUGERENCIA: Verifica que tu tarjeta tenga fondos o que la API Key esté activa en Google AI Studio.")
 
 st.sidebar.divider()
 st.sidebar.caption("© 2026 - Universidad UNICA")
