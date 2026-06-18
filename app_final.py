@@ -111,20 +111,27 @@ with st.expander("📚 Ver Fundamento Estadístico y de Cálculo (Hibbeler/Walpo
     """)
 
 # --- IA DIAGNÓSTICO (ALTA DISPONIBILIDAD) ---
+# --- IA DIAGNÓSTICO CON DETECCIÓN DE ERRORES REALES ---
 if st.button("🧠 GENERAR DIAGNÓSTICO INTEGRAL IA"):
-    prompt = f"Como Ingeniero Senior, analiza: FS {fs:.2f}, Riesgo Total {p_falla_total*100:.1f}%, Bayes {p_bayes*100:.2f}%. Usa terminología de Walpole e Hibbeler."
-    modelos = ['gemini-1.5-flash', 'gemini-2.0-flash-lite']
-    exito = False
-    with st.spinner('Analizando integridad estructural...'):
-        for mod in modelos:
-            if exito: break
-            try:
-                res = client.models.generate_content(model=mod, contents=prompt)
-                st.success(f"Diagnóstico emitido por {mod}")
-                st.markdown(res.text)
-                exito = True
-            except: continue
-        if not exito: st.error("Servidores ocupados. Intenta en 30 segundos.")
+    prompt = f"Como Ingeniero experto, analiza: FS {fs:.2f}, Riesgo {p_falla_total*100:.1f}%, Bayes {p_bayes*100:.2f}%. Usa terminología de Walpole e Hibbeler."
+    
+    # Intentaremos primero con el modelo más estable
+    try:
+        with st.spinner('Consultando al Ingeniero Senior...'):
+            res = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
+            st.success("Análisis exitoso")
+            st.markdown(res.text)
+    except Exception as e:
+        error_msg = str(e)
+        # Mostramos el error real para saber qué corregir
+        st.error(f"❌ Error real de Google: {error_msg}")
+        
+        if "401" in error_msg:
+            st.warning("💡 Sugerencia: Tu llave API no es válida o no ha sido reconocida. Revisa el panel de Secrets.")
+        elif "429" in error_msg:
+            st.warning("💡 Sugerencia: Has superado el límite de intentos gratuitos. Espera 1 minuto.")
+        elif "503" in error_msg:
+            st.warning("💡 Sugerencia: Los servidores de Google están saturados de verdad. Intenta en un momento.")
 
 st.sidebar.divider()
 st.sidebar.caption("© 2026 - Universidad UNICA")
