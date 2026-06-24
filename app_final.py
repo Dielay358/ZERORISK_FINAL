@@ -144,4 +144,4 @@ if st.button("🏗️ GENERAR DIAGNÓSTICO E INFORME MAGISTRAL"):
     st.table(df_lib)
 
 st.sidebar.divider()
-st.sidebar.caption("© 2026 - Universidad UNICA | FIA"))
+st.sidebar.caption("© 2026 - Universidad UNICA | FIA")
