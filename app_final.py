@@ -107,6 +107,21 @@ with st.expander("📚 Fundamentación Científica (Criterios de Evaluación)"):
     $$P(B_2 | F) = \frac{{P(F | B_2) \cdot P(B_2)}}{{P(F)}} = {p_bayes*100:.2f}\%$$
     """)
 
+    ### 4. Panel de Demostración de Librerías
+with st.expander("🛠️ Arquitectura de Software y Demostración de Librerías"):
+    df_lib = pd.DataFrame({
+        "Librería": ["SciPy (Stats)", "SciPy (Integrate)", "NumPy", "Matplotlib", "Streamlit"],
+        "Demostración de Aplicación": [
+            f"Distribución de Poisson y Bayes: P(F) = {p_falla_total:.4f}",
+            f"Integral Definida de Volumen: {vol_lastre:.2f} m3",
+            f"Cálculo de Torque: {mv:.0f} Nm",
+            "DCL Dinámico: ax.fill_between() y ax.text()",
+            "Interfaz reactiva: st.sidebar y st.metric()"
+        ],
+        "Referencia": ["Walpole", "Cálculo II", "Hibbeler", "Gráfica", "Software"]
+    })
+    st.table(df_lib)
+
 # --- BOTÓN DE DIAGNÓSTICO ---
 if st.button("🏗️ GENERAR DIAGNÓSTICO MAGISTRAL"):
     st.markdown("## 📋 INFORME DE AUDITORÍA TÉCNICA")
