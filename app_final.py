@@ -113,7 +113,6 @@ with st.expander("🛠️ Arquitectura de Software y Demostración de Librerías
         "Librería": ["SciPy (Stats)", "SciPy (Integrate)", "NumPy", "Matplotlib", "Streamlit"],
         "Demostración de Aplicación": [
             f"Distribución de Poisson y Bayes: P(F) = {p_falla_total:.4f}",
-            f"Integral Definida de Volumen: {vol_lastre:.2f} m3",
             f"Cálculo de Torque: {mv:.0f} Nm",
             "DCL Dinámico: ax.fill_between() y ax.text()",
             "Interfaz reactiva: st.sidebar y st.metric()"
