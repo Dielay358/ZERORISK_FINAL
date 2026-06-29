@@ -82,11 +82,22 @@ st.pyplot(fig)
 if st.button("🏗️ GENERAR INFORME DE AUDITORÍA MAGISTRAL"):
     st.header("📋 INFORME DE AUDITORÍA TÉCNICA PASO A PASO")
     
-    # 1. CÁLCULO II
+     # --- 1. CÁLCULO II DESGLOSADO ---
     st.subheader("1. Determinación del Centroide mediante Cálculo Integral")
+    st.write("Siguiendo el programa de Cálculo II, determinamos el centro de masa de la pluma ($\bar{x}$) mediante la suma continua de elementos diferenciales de masa.")
     st.markdown(fr"""
-    Calculamos el centro de masa de la pluma ($\bar{{x}}$) como una suma de elementos diferenciales:
-    $$\bar{{x}} = \frac{{\int_0^{{45}} x \cdot (60 + 1.5x) dx}}{{\int_0^{{45}} (60 + 1.5x) dx}} = \frac{{{momento_pluma:.2f}}}{{{masa_pluma:.2f}}} = {centroide_pluma:.2f} m$$
+    **Paso A: Definir la Función de Densidad Lineal $\rho(x)$:**  
+    Modelamos la viga de acero como un cuerpo cuya densidad disminuye linealmente: $\rho(x) = 60 + 1.5x$.  
+    
+    **Paso B: Cálculo del Momento Estático ($M_x$):**  
+    $$M_x = \int_0^{{45}} x \cdot \rho(x) dx = \int_0^{{45}} x \cdot (60 + 1.5x) dx = {momento_pluma:.2f}$$
+    
+    **Paso C: Cálculo de la Masa Total ($M$):**  
+    $$M = \int_0^{{45}} \rho(x) dx = \int_0^{{45}} (60 + 1.5x) dx = {masa_pluma:.2f} kg$$
+    
+    **Paso D: División para hallar el Centroide:**  
+    $$\bar{{x}} = \frac{{M_x}}{{M}} = \frac{{{momento_pluma:.2f}}}{{{masa_pluma:.2f}}} = {centroide_pluma:.2f} m$$
+    *El objetivo es localizar el punto exacto donde el peso de la estructura genera torque sobre el mástil.*
     """)
 
     # 2. ESTADÍSTICA
