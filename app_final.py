@@ -107,14 +107,18 @@ if st.button("🏗️ GENERAR INFORME DE AUDITORÍA MAGISTRAL"):
     $\bar{{x}} = \frac{{M_x}}{{M}} = \frac{{{momento_pluma:.2f}}}{{{masa_pluma:.2f}}} = {centroide_pluma:.2f} m$
     """)
 
-    # 2. ESTADÍSTICA
+    # --- 2. ESTADÍSTICA DESGLOSADA ---
     st.subheader("2. Análisis de Riesgo Bayesiano (Walpole)")
+    st.write("Aplicamos el Teorema de Bayes para actualizar la probabilidad de fallo bajo evidencia de viento.")
     st.markdown(fr"""
-    **Teorema de Partición (Probabilidad Total):**  
-    $P(F) = [P(F|B_1) \cdot P(B_1)] + [P(F|B_2) \cdot P(B_2)] = {p_falla_total:.4f}$
+    **Paso A: Probabilidad Total (Teorema de Partición):**  
+    Dividimos el riesgo en dos escenarios: Viento Seguro ($B_1$) y Viento Fuerte ($B_2$).  
+    $$P(F) = [P(F|B_1) \cdot P(B_1)] + [P(F|B_2) \cdot P(B_2)]$$
+    $$P(F) = [{p_f_dado_b1:.3f} \cdot {p_b1}] + [{p_f_dado_b2:.2f} \cdot {p_b2}] = {p_falla_total:.4f}$$
     
-    **Teorema de Bayes:**  
-    $P(B_2|F) = \frac{{P(F|B_2) \cdot P(B_2)}}{{P(F)}} = {p_bayes*100:.2f}\%$
+    **Paso B: Aplicación de Bayes:**  
+    $$P(B_2|F) = \frac{{P(F|B_2) \cdot P(B_2)}}{{P(F)}} = \frac{{{p_f_dado_b2} \cdot {p_b2}}}{{{p_falla_total:.4f}}} = {p_bayes*100:.2f}\%$$
+    *Objetivo: Cuantificar qué tanto influye el viento en la probabilidad de colapso actual.*
     """)
 
     # --- 3. MASA DEL BALASTO ---
