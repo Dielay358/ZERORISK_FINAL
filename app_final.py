@@ -122,10 +122,10 @@ if st.button("🏗️ GENERAR INFORME DE AUDITORÍA MAGISTRAL"):
     st.markdown(fr"""
     Para evitar la inestabilidad de figuras cilíndricas, usamos bloques rectangulares modulares:
     *   **Volumen por bloque:** $2m \cdot 1m \cdot 0.5m = 1.0 m^3$.
-    *   **Masa por bloque:** $1.0 m^3 \cdot 2400 kg/m^3 = 2400 kg$.
+    *   **Masa por bloque:** $1.0 m^3 \cdot 2380 kg/m^3 = 2380 kg$.
     *   **Masa Total ({num_bloques} bloques):** **{masa_total_contra:.0f} kg**.
     """)
-    
+
     # 4. PANEL DE LIBRERÍAS
     st.subheader("4. Panel de Demostración de Librerías")
     df_lib = pd.DataFrame({
